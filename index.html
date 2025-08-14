@@ -1591,19 +1591,6 @@
         $('#imgFoodCard').addEventListener('change', e => handleFile(e, 'foodcard'));
         $('#imgLogo').addEventListener('change', e => handleFile(e, 'logo'));
       
-      // عند تغيير الشاشة أو إدخال بيانات
-function saveState() {
-    const activeScreen = document.querySelector('.screen.active').id; // الشاشة المفتوحة
-    localStorage.setItem('activeScreen', activeScreen);
-
-    // حفظ بيانات الحقول في الشاشة الحالية
-    const inputs = document.querySelectorAll('.screen.active input, .screen.active select, .screen.active textarea');
-    const inputValues = {};
-    inputs.forEach(input => {
-        inputValues[input.id] = input.value;
-    });
-    localStorage.setItem('activeScreenData', JSON.stringify(inputValues));
-}
 
 // استعادة الشاشة والبيانات عند التحميل
 window.onload = function() {
@@ -1619,14 +1606,7 @@ window.onload = function() {
             for (let id in inputValues) {
                 const input = document.getElementById(id);
                 if (input) input.value = inputValues[id];
-            }
-        }
-    } else {
-        // لو ما في شاشة محفوظة اعرض الترحيب
-        document.getElementById('welcomeScreen').style.display = 'block';
-        document.getElementById('welcomeScreen').classList.add('active');
-    }
-};
+  
 
 // تأكد من حفظ الحالة عند أي تغيير أو قبل تحديث الصفحة
 window.addEventListener('beforeunload', saveState);
