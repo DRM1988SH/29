@@ -242,7 +242,7 @@
             border-radius: 15px;
         }
 
-        /* بطاقة غذائية */
+        /* بطاقة غذائية معدلة */
         .foodcard {
             position: relative;
             width: 9.701in;
@@ -254,6 +254,7 @@
             align-items: stretch;
             margin: 0 auto;
             page-break-after: always;
+            direction: rtl;
         }
 
         .fc-col {
@@ -261,6 +262,7 @@
             flex-direction: column;
             gap: 0.03in;
             flex: 1;
+            min-height: 100%;
         }
 
         .fc-box {
@@ -271,6 +273,8 @@
             align-items: center;
             justify-content: center;
             text-align: center;
+            flex: 1;
+            min-height: 0;
         }
 
         .fc-sticker {
@@ -281,12 +285,32 @@
             font-weight: 800;
             font-size: 22pt;
             padding: 0 0.2in;
+            width: 1.2in;
+        }
+
+        .fc-img-container {
+            width: 1.2in;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            border: 1px solid #000;
+            padding: 0.05in;
         }
 
         .fc-img {
-            height: 100%;
-            aspect-ratio: 1/1;
+            width: 100%;
+            height: auto;
+            max-height: 0.8in;
             object-fit: contain;
+        }
+
+        .fc-slaughter-name {
+            font-size: 8pt;
+            text-align: center;
+            margin-top: 0.05in;
+            font-weight: bold;
         }
 
         .fc-footer {
@@ -331,7 +355,7 @@
         }
 
         .fc-label {
-            border: 1.5pt solid #000;
+            border: 2pt solid #000;
             height: 50%;
             display: flex;
             align-items: center;
@@ -341,22 +365,22 @@
         }
 
         .fc-value {
-            border: 1.5pt solid #000;
+            border: 2pt solid #000;
             height: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10pt;
+            font-size: 14pt;
         }
 
         .fc-sticker {
             width: 1.2in;
-            border: 1.5pt solid #000;
+            border: 2pt solid #000;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 16pt;
+            font-size: 20pt;
             margin-left: 0.05in;
         }
 
@@ -418,7 +442,7 @@
                 left: 0;
                 top: 0;
                 width: 100%;
-                padding: 25px;
+                padding: 20px;
             }
 
             .foodcard-page {
@@ -894,7 +918,8 @@
                     login: null,
                     input: null,
                     hub: null,
-                    logo: null
+                    logo: null,
+                    foodcard: null
                 },
                 clients: {},
                 entries: []
@@ -1108,6 +1133,48 @@
             </div>`;
         }
 
+        function buildFoodCard(e) {
+            const img = state.data.images.foodcard || state.data.images.logo || '';
+            const slaughterName = e.site || 'المسلخ';
+            const prodDate = dayjs().format('YYYY-MM-DD');
+            const expDays = expiryDays(e.animalType);
+            const expDate = dayjs().add(expDays, 'day').format('YYYY-MM-DD');
+            
+            return `
+            <div class="foodcard">
+                <div class="fc-img-container">
+                    ${img ? `<img src="${img}" class="fc-img">` : ''}
+                    <div class="fc-slaughter-name">${slaughterName}</div>
+                </div>
+                
+                <div class="fc-col">
+                    <div class="fc-box">نوع الذبيحة</div>
+                    <div class="fc-box">${e.animalType}</div>
+                </div>
+                
+                <div class="fc-col">
+                    <div class="fc-box">نوع التقطيع</div>
+                    <div class="fc-box">${e.cutType}</div>
+                </div>
+                
+                <div class="fc-col">
+                    <div class="fc-box">تاريخ الانتاج</div>
+                    <div class="fc-box">${prodDate}</div>
+                </div>
+                
+                <div class="fc-col">
+                    <div class="fc-box">تاريخ الانتهاء</div>
+                    <div class="fc-box">${expDate}</div>
+                </div>
+                
+                <div class="fc-sticker">${e.sticker}</div>
+                
+                <div class="fc-footer">
+                    لأي ملاحظة يرجى مراجعة المسلخ
+                </div>
+            </div>`;
+        }
+
         function printInvoiceLast() {
             const e = state.data.entries[state.data.entries.length - 1];
             if (!e) return alert('لا بيانات');
@@ -1127,23 +1194,15 @@
             const e = state.data.entries[state.data.entries.length - 1];
             if (!e) return alert('لا بيانات');
             
-            // تعبئة بيانات البطاقة
-            $('#fcAnimalType').textContent = e.animalType;
-            $('#fcCutType').textContent = e.cutType;
-            $('#fcSticker').textContent = e.sticker;
+            const printContent = document.createElement('div');
+            printContent.className = 'print-content';
+            printContent.innerHTML = buildFoodCard(e);
             
-            // تاريخ اليوم
-            const today = new Date();
-            $('#fcProdDate').textContent = today.toISOString().split('T')[0];
-            
-            // حساب تاريخ الانتهاء
-            const expiryDays = (e.animalType === 'خروف' || e.animalType === 'ماعز') ? 14 : 21;
-            const expiryDate = new Date(today);
-            expiryDate.setDate(today.getDate() + expiryDays);
-            $('#fcExpDate').textContent = expiryDate.toISOString().split('T')[0];
-            
-            // عرض البطاقة
-            $('#foodCardContainer').style.display = 'flex';
+            document.body.appendChild(printContent);
+            window.print();
+            setTimeout(() => {
+                document.body.removeChild(printContent);
+            }, 500);
         }
 
         function filter(site, from, to) {
@@ -1344,10 +1403,10 @@
 
         function previewFoodCard() {
             const e = {
-                site: 'مسلخ تجريبي',
-                animalType: 'خروف',
-                cutType: 'عزيمة',
-                sticker: '5678',
+                site: $('#site').value || 'مسلخ تجريبي',
+                animalType: $('#animalType').value || 'خروف',
+                cutType: $('#cutType').value || 'عزيمة',
+                sticker: $('#sticker').value || '5678',
                 date: new Date().toISOString()
             };
             $('#cardPreviewWrap').innerHTML = buildFoodCard(e);
@@ -1531,6 +1590,47 @@
         $('#imgStats').addEventListener('change', e => handleFile(e, 'stats'));
         $('#imgFoodCard').addEventListener('change', e => handleFile(e, 'foodcard'));
         $('#imgLogo').addEventListener('change', e => handleFile(e, 'logo'));
+      
+      // عند تغيير الشاشة أو إدخال بيانات
+function saveState() {
+    const activeScreen = document.querySelector('.screen.active').id; // الشاشة المفتوحة
+    localStorage.setItem('activeScreen', activeScreen);
+
+    // حفظ بيانات الحقول في الشاشة الحالية
+    const inputs = document.querySelectorAll('.screen.active input, .screen.active select, .screen.active textarea');
+    const inputValues = {};
+    inputs.forEach(input => {
+        inputValues[input.id] = input.value;
+    });
+    localStorage.setItem('activeScreenData', JSON.stringify(inputValues));
+}
+
+// استعادة الشاشة والبيانات عند التحميل
+window.onload = function() {
+    const activeScreen = localStorage.getItem('activeScreen');
+    if (activeScreen) {
+        document.querySelectorAll('.screen').forEach(screen => screen.style.display = 'none');
+        const screenToShow = document.getElementById(activeScreen);
+        screenToShow.style.display = 'block';
+        screenToShow.classList.add('active');
+
+        const inputValues = JSON.parse(localStorage.getItem('activeScreenData'));
+        if (inputValues) {
+            for (let id in inputValues) {
+                const input = document.getElementById(id);
+                if (input) input.value = inputValues[id];
+            }
+        }
+    } else {
+        // لو ما في شاشة محفوظة اعرض الترحيب
+        document.getElementById('welcomeScreen').style.display = 'block';
+        document.getElementById('welcomeScreen').classList.add('active');
+    }
+};
+
+// تأكد من حفظ الحالة عند أي تغيير أو قبل تحديث الصفحة
+window.addEventListener('beforeunload', saveState);
+
     </script>
 </body>
 </html>
