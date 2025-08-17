@@ -242,11 +242,11 @@
             border-radius: 15px;
         }
 
-        /* بطاقة غذائية معدلة */
+        /* بطاقة غذائية معدلة لطابعة Zebra ZT-230 */
         .foodcard {
             position: relative;
-            width: 9.701in;
-            height: 1.907in;
+            width: 9.701in; /* 9.701 بوصة طول */
+            height: 1.907in; /* 1.907 بوصة ارتفاع */
             border: 2.5pt solid #000;
             padding: 0.05in;
             display: flex;
@@ -255,6 +255,8 @@
             margin: 0 auto;
             page-break-after: always;
             direction: rtl;
+            font-family: "Cairo", sans-serif;
+            box-sizing: border-box;
         }
 
         .fc-col {
@@ -415,76 +417,6 @@
             color: #666;
         }
 
-        @media print {
-            @page {
-                size: A4 landscape;
-                margin: 5mm;
-            }
-            
-            body * {
-                visibility: hidden;
-            }
-
-            .print-content,
-            .print-content * {
-                visibility: visible;
-            }
-
-            .print-content {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                padding: 10px;
-            }
-
-            .foodcard-page {
-                page-break-after: always;
-                margin: 0;
-                padding: 0;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            table, th, td {
-                border: 2.5pt solid #000 !important;
-            }
-
-            .landscape-report {
-                width: 100%;
-                overflow: visible;
-            }
-            
-            .auto-fit-columns td, 
-            .auto-fit-columns th {
-                white-space: nowrap;
-                width: auto !important;
-                padding: 5px;
-                font-size: 12px;
-            }
-            
-            .report-header {
-                padding: 10px;
-                margin-bottom: 15px;
-            }
-            
-            .report-title {
-                font-size: 22px;
-            }
-            
-            .report-logo {
-                height: 70px;
-            }
-            
-            .report-meta {
-                padding: 10px;
-                margin-bottom: 15px;
-                font-size: 14px;
-            }
-        }
-        
         /* زر تعديل الفاتورة */
         .edit-btn {
             background: var(--amber-btn-bg);
@@ -514,6 +446,76 @@
             padding: 5px;
             text-align: center;
             font-size: 14px;
+        }
+
+        /* أنماط الطباعة المعدلة */
+        @media print {
+            body.printing * {
+                visibility: hidden;
+            }
+            
+            body.printing .print-content,
+            body.printing .print-content * {
+                visibility: visible;
+            }
+        
+            body.printing {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .print-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                padding: 0;
+                margin: 0;
+                background: white;
+            }
+            
+            .landscape-report {
+                width: 100%;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                page-break-inside: auto;
+            }
+            
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            
+            td, th {
+                border: 2.5pt solid #000 !important;
+                padding: 5px;
+                font-size: 12px;
+            }
+            
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+            
+            /* تنسيق خاص للبطاقة الغذائية */
+            .foodcard {
+                page-break-after: always;
+                margin: 0;
+                padding: 0.05in;
+                width: 9.701in;
+                height: 1.907in;
+                border: 2.5pt solid #000;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -553,7 +555,7 @@
                 <img id="hubImg" class="img200" alt>
                 <h3 style="font-size:28px">مرحبا بكم في نظام المسالخ وسجلات المتعاملين</h3>
                 <div class="row" style="justify-content:center;margin-top:25px;gap:20px">
-                    <p style="font-size:22px;">جميع البيانات للاستخدام الرسمي فقط غير مصرح بها للتداول والاستخدام الشخصي ©.</p>
+                    <p style="font-size:22px;">جميع البيانات للاستخدام الرسمي فقط غير مصرح بها للاستخدام الشخصي وتداول البيانات.</p>
                 </div>
             </div>
         </section>
@@ -834,6 +836,21 @@
                 </div>
 
                 <div class="card">
+                    <h3>إعدادات الطابعات</h3>
+                    <div class="grid g3" style="gap:15px">
+                        <select id="printerType" style="height:50px">
+                            <option value="Epson-TM-70II">Epson TM-70II</option>
+                            <option value="Epson-TM-U220">Epson TM-U220</option>
+                            <option value="Zebra-ZT-230">Zebra ZT-230</option>
+                            <option value="custom">مخصص</option>
+                        </select>
+                        <input id="customWidth" type="number" placeholder="العرض (مم)" style="height:50px" disabled>
+                        <input id="customHeight" type="number" placeholder="الارتفاع (مم)" style="height:50px" disabled>
+                    </div>
+                    <button class="btn b-blue" id="btnSavePrinter" style="height:50px;margin-top:15px">حفظ إعدادات الطابعة</button>
+                </div>
+
+                <div class="card">
                     <h3>إعداد الصور</h3>
                     <div class="grid g4" style="gap:15px">
                         <div>
@@ -932,14 +949,38 @@
             logged: false,
             loggedId: null,
             role: 'user',
-            data: JSON.parse(localStorage.getItem(DBKEY) || 'null') || getDefaults(),
+            data: getDefaults(),
             editingIndex: null,
             editingRow: null,
             editingCell: null
         };
 
+        // تحميل البيانات المحفوظة عند بدء التشغيل
+        function loadData() {
+            const savedData = localStorage.getItem(DBKEY);
+            if (savedData) {
+                state.data = JSON.parse(savedData);
+            }
+            
+            // تحميل حالة تسجيل الدخول
+            const savedState = localStorage.getItem('slaughter-app-state');
+            if (savedState) {
+                const parsed = JSON.parse(savedState);
+                state.logged = parsed.logged || false;
+                state.loggedId = parsed.loggedId || null;
+                state.role = parsed.role || 'user';
+                state.screen = parsed.screen || 'welcome';
+            }
+        }
+
         function save() {
             localStorage.setItem(DBKEY, JSON.stringify(state.data));
+            localStorage.setItem('slaughter-app-state', JSON.stringify({
+                logged: state.logged,
+                loggedId: state.loggedId,
+                role: state.role,
+                screen: state.screen
+            }));
         }
 
         function getDefaults() {
@@ -975,6 +1016,17 @@
                     logo: null,
                     foodcard: null
                 },
+                printers: {
+                    selected: 'Epson-TM-70II',
+                    customWidth: 80,
+                    customHeight: 297
+                },
+                printerSettings: {
+                    'Epson-TM-70II': { width: 80, height: 297 },
+                    'Epson-TM-U220': { width: 80, height: 297 },
+                    'Zebra-ZT-230': { width: 9.701, height: 1.907 }
+                },
+                cardNote: ' ',
                 clients: {},
                 entries: []
             }
@@ -1081,6 +1133,31 @@
             });
         }
 
+        function refreshPrinterSettings() {
+            $('#printerType').value = state.data.printers.selected;
+            $('#customWidth').value = state.data.printers.customWidth;
+            $('#customHeight').value = state.data.printers.customHeight;
+            
+            if (state.data.printers.selected === 'custom') {
+                $('#customWidth').disabled = false;
+                $('#customHeight').disabled = false;
+            } else {
+                $('#customWidth').disabled = true;
+                $('#customHeight').disabled = true;
+            }
+        }
+
+        function getInvoiceDimensions() {
+            if (state.data.printers.selected === 'custom') {
+                return {
+                    width: state.data.printers.customWidth,
+                    height: state.data.printers.customHeight
+                };
+            }
+            return state.data.printerSettings[state.data.printers.selected] || 
+                   { width: 80, height: 297 };
+        }
+
         function getPrice(a, c) {
             const r = state.data.rules.find(x => x.animal === a && x.cut === c);
             return r ? Number(r.price) : 0;
@@ -1133,7 +1210,6 @@
         }
 
         function clearInputFields() {
-            // مسح جميع الحقول ما عدا الموقع
             $('#phone').value = '';
             $('#clientName').value = '';
             $('#invoiceNo').value = '';
@@ -1169,14 +1245,12 @@
             upsertClient(e.phone, e.clientName);
             
             if (state.editingIndex !== null) {
-                // تحديث الفاتورة الموجودة بدلاً من إضافة جديدة
                 state.data.entries[state.editingIndex] = e;
                 state.editingIndex = null;
                 $('#btnAdd').textContent = 'إضافة ذبيحة';
                 $('#btnAdd').classList.remove('save-btn');
                 $('#btnAdd').classList.add('b-green');
             } else {
-                // إضافة فاتورة جديدة
                 state.data.entries.push(e);
             }
             
@@ -1195,14 +1269,15 @@
         }
 
         function buildInvoice(e) {
+            const dim = getInvoiceDimensions();
             const img = state.data.images.logo || state.data.images.welcome || '';
             return `
-            <div style="border:2.5pt solid #000;border-radius:15px;padding:20px;max-width:800px;margin:0 auto">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-                    ${img?`<img src='${img}' style='height:80px'>`:''}
-                    <h2 style="margin:0;font-size:24px">فاتورة - ${e.site}</h2>
+            <div style="border:2.5pt solid #000;border-radius:15px;padding:20px;width:${dim.width}mm;min-height:${dim.height}mm;margin:0 auto;font-family:'Cairo',sans-serif;direction:rtl">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:10px">
+                    ${img?`<img src='${img}' style='height:30px;max-width:100px'>`:''}
+                    <h2 style="margin:0;font-size:${dim.width > 90 ? '24px' : '18px'}">فاتورة - ${e.site}</h2>
                 </div>
-                <table style="width:100%;font-size:18px;border-collapse:collapse;border:2.5pt solid #000">
+                <table style="width:100%;font-size:${dim.width > 90 ? '18px' : '14px'};border-collapse:collapse;margin:10px 0">
                     <tbody>
                         <tr><td style="padding:8px;width:30%;border:2.5pt solid #000"><b>التاريخ</b></td><td style="padding:8px;border:2.5pt solid #000">${dayjs(e.date).format('YYYY-MM-DD HH:mm')}</td></tr>
                         <tr><td style="padding:8px;border:2.5pt solid #000"><b>رقم الفاتورة</b></td><td style="padding:8px;border:2.5pt solid #000">${e.invoiceNo}</td></tr>
@@ -1211,11 +1286,11 @@
                         <tr><td style="padding:8px;border:2.5pt solid #000"><b>نوع الذبيحة</b></td><td style="padding:8px;border:2.5pt solid #000">${e.animalType}</td></tr>
                         <tr><td style="padding:8px;border:2.5pt solid #000"><b>نوع التقطيع</b></td><td style="padding:8px;border:2.5pt solid #000">${e.cutType}</td></tr>
                         <tr><td style="padding:8px;border:2.5pt solid #000"><b>العدد</b></td><td style="padding:8px;border:2.5pt solid #000">${e.qty}</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>السعر</b></td><td style="padding:8px;border:2.5pt solid #000">${e.price}</td></tr>
+                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>السعر</b></td><td style="padding:8px;border:2.5pt solid #000">${e.price} درهم</td></tr>
                         <tr><td style="padding:8px;border:2.5pt solid #000"><b>الإجمالي</b></td><td style="padding:8px;border:2.5pt solid #000">${e.total.toFixed(2)} درهم</td></tr>
                     </tbody>
                 </table>
-                <div style="margin-top:30px;text-align:center;font-size:16px">
+                <div style="margin-top:15px;text-align:center;font-size:${dim.width > 90 ? '16px' : '12px'};border-top:2px solid #000;padding-top:10px">
                     نسعد دوماً لخدمتكم - ${e.site}
                 </div>
             </div>`;
@@ -1258,7 +1333,7 @@
                 <div class="fc-sticker">${e.sticker}</div>
                 
                 <div class="fc-footer">
-
+                    ${state.data.cardNote || ' '}
                 </div>
             </div>`;
         }
@@ -1271,11 +1346,21 @@
             printContent.className = 'print-content';
             printContent.innerHTML = buildInvoice(e);
             
+            // إخفاء كل شيء عدا محتوى الطباعة
+            document.body.classList.add('printing');
+            
             document.body.appendChild(printContent);
-            window.print();
+            
+            // تأخير الطباعة لضمان تحميل المحتوى
             setTimeout(() => {
-                document.body.removeChild(printContent);
-            }, 500);
+                window.print();
+                
+                // إعادة عرض العناصر بعد الطباعة
+                setTimeout(() => {
+                    document.body.classList.remove('printing');
+                    document.body.removeChild(printContent);
+                }, 500);
+            }, 200);
         }
         
         function printFoodCardLast() {
@@ -1286,12 +1371,33 @@
             printContent.className = 'print-content';
             printContent.innerHTML = buildFoodCard(e);
             
+            // إخفاء كل شيء عدا محتوى الطباعة
+            document.body.classList.add('printing');
+            
             document.body.appendChild(printContent);
-            window.print();
+            
+            // إعدادات خاصة بالطباعة على Zebra ZT-230
+            const printSettings = {
+                silent: true,
+                printBackground: true,
+                margin: 'none',
+                pageSize: {
+                    width: 9.701 * 96, // تحويل البوصة إلى بكسل (96 بكسل لكل بوصة)
+                    height: 1.907 * 96
+                }
+            };
+            
+            // تأخير الطباعة لضمان تحميل المحتوى
             setTimeout(() => {
-                document.body.removeChild(printContent);
-                clearInputFields(); // مسح الحقول بعد الطباعة
-            }, 500);
+                window.print(printSettings);
+                
+                // إعادة عرض العناصر بعد الطباعة
+                setTimeout(() => {
+                    document.body.classList.remove('printing');
+                    document.body.removeChild(printContent);
+                    clearInputFields();
+                }, 500);
+            }, 200);
         }
 
         function filter(site, from, to) {
@@ -1355,8 +1461,24 @@
                 <div class="report-meta">
                     <p><b>الفترة:</b> ${from||'البداية'} إلى ${to||'النهاية'}</p>
                 </div>
-                <table class="auto-fit-columns" style="width:100%;border:2.5pt solid #000">
-                    ${$('#tblClients').innerHTML}
+                <table style="width:100%;border-collapse:collapse;margin-top:20px">
+                    <thead>
+                        <tr>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">#</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">التاريخ</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">اسم المتعامل</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">رقم التلفون</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">نوع الذبيحة</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">نوع التقطيع</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">رقم الفاتورة</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">العدد</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">السعر</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array.from($('#tblClients tbody').children).map(tr => tr.outerHTML).join('')}
+                    </tbody>
                 </table>
                 <div class="report-footer">
                     <p>عدد السجلات: ${$('#tblClients tbody').children.length}</p>
@@ -1367,11 +1489,21 @@
             printContent.className = 'print-content';
             printContent.innerHTML = content;
             
+            // إخفاء كل شيء عدا محتوى الطباعة
+            document.body.classList.add('printing');
+            
             document.body.appendChild(printContent);
-            window.print();
+            
+            // تأخير الطباعة لضمان تحميل المحتوى
             setTimeout(() => {
-                document.body.removeChild(printContent);
-            }, 500);
+                window.print();
+                
+                // إعادة عرض العناصر بعد الطباعة
+                setTimeout(() => {
+                    document.body.classList.remove('printing');
+                    document.body.removeChild(printContent);
+                }, 500);
+            }, 200);
         }
 
         function runStats() {
@@ -1422,8 +1554,19 @@
                 <div class="report-meta">
                     <p><b>الفترة:</b> ${from||'البداية'} إلى ${to||'النهاية'}</p>
                 </div>
-                <table style="width:100%;border:2.5pt solid #000">
-                    ${$('#tblStats').innerHTML}
+                <table style="width:100%;border-collapse:collapse;margin-top:20px">
+                    <thead>
+                        <tr>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">نوع الذبيحة</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">نوع التقطيع</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">عدد الذبائح</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">العدد الكلي</th>
+                            <th style="border:2.5pt solid #000;padding:8px;font-weight:bold">المبلغ الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array.from($('#tblStats tbody').children).map(tr => tr.outerHTML).join('')}
+                    </tbody>
                 </table>
                 <div class="report-footer">
                     <p>عدد الأنواع: ${$('#tblStats tbody').children.length}</p>
@@ -1434,11 +1577,21 @@
             printContent.className = 'print-content';
             printContent.innerHTML = content;
             
+            // إخفاء كل شيء عدا محتوى الطباعة
+            document.body.classList.add('printing');
+            
             document.body.appendChild(printContent);
-            window.print();
+            
+            // تأخير الطباعة لضمان تحميل المحتوى
             setTimeout(() => {
-                document.body.removeChild(printContent);
-            }, 500);
+                window.print();
+                
+                // إعادة عرض العناصر بعد الطباعة
+                setTimeout(() => {
+                    document.body.classList.remove('printing');
+                    document.body.removeChild(printContent);
+                }, 500);
+            }, 200);
         }
 
         function renderInvoices() {
@@ -1468,7 +1621,6 @@
         }
 
         function startEdit(rowIndex, cellIndex, cell) {
-            // إذا كان هناك خلية في وضع التعديل، احفظها أولاً
             if (state.editingCell) {
                 saveEdit();
             }
@@ -1479,11 +1631,10 @@
             input.className = 'edit-input';
             input.value = cellValue;
             
-            // تحديد نوع حقل الإدخال بناءً على نوع البيانات
-            if (cellIndex === 6) { // العدد
+            if (cellIndex === 6) {
                 input.type = 'number';
                 input.min = '1';
-            } else if (cellIndex === 7) { // السعر
+            } else if (cellIndex === 7) {
                 input.type = 'number';
                 input.step = '0.5';
                 input.min = '0';
@@ -1495,7 +1646,6 @@
             cell.appendChild(input);
             input.focus();
             
-            // حفظ حالة التعديل
             state.editingRow = rowIndex;
             state.editingCell = cellIndex;
             state.editingElement = input;
@@ -1507,44 +1657,38 @@
             const newValue = state.editingElement.value;
             const entry = state.data.entries[state.editingRow];
             
-            // تحديث القيمة في السجل بناءً على الخلية التي تم تعديلها
             switch(state.editingCell) {
-                case 1: // رقم الفاتورة
+                case 1:
                     entry.invoiceNo = newValue;
                     break;
-                case 2: // رقم الذبيحة
+                case 2:
                     entry.animalNo = newValue;
                     break;
-                case 3: // رقم الاستيكر
+                case 3:
                     entry.sticker = +newValue;
                     break;
-                case 4: // نوع الذبيحة
+                case 4:
                     entry.animalType = newValue;
                     break;
-                case 5: // نوع التقطيع
+                case 5:
                     entry.cutType = newValue;
                     break;
-                case 6: // العدد
+                case 6:
                     entry.qty = +newValue;
                     break;
-                case 7: // السعر
+                case 7:
                     entry.price = +newValue;
                     break;
             }
             
-            // إعادة حساب الإجمالي إذا تم تعديل العدد أو السعر
             if (state.editingCell === 6 || state.editingCell === 7) {
                 entry.total = entry.qty * entry.price;
             }
             
-            // حفظ التغييرات
             save();
-            
-            // إعادة عرض الجدول
             renderInvoices();
             renderCurrent();
             
-            // إعادة تعيين حالة التعديل
             state.editingRow = null;
             state.editingCell = null;
             state.editingElement = null;
@@ -1558,15 +1702,7 @@
         }
 
         function init() {
-            // استعادة حالة المستخدم من localStorage إذا كانت موجودة
-            const savedState = localStorage.getItem('slaughter-app-state');
-            if (savedState) {
-                const parsed = JSON.parse(savedState);
-                state.logged = parsed.logged || false;
-                state.loggedId = parsed.loggedId || null;
-                state.role = parsed.role || 'user';
-                state.screen = parsed.screen || 'welcome';
-            }
+            loadData();
             
             if (state.logged) {
                 setScreen(state.screen);
@@ -1580,6 +1716,7 @@
             refreshRules();
             refreshUsers();
             refreshSitesTable();
+            refreshPrinterSettings();
             renderCurrent();
             renderInvoices();
             $('#now').textContent = dayjs().format('dddd, D MMMM YYYY');
@@ -1610,16 +1747,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', init);
-
-        // حفظ حالة التطبيق قبل إغلاق الصفحة
-        window.addEventListener('beforeunload', () => {
-            localStorage.setItem('slaughter-app-state', JSON.stringify({
-                logged: state.logged,
-                loggedId: state.loggedId,
-                role: state.role,
-                screen: state.screen
-            }));
-        });
 
         // Events
         document.addEventListener('click', e => {
@@ -1743,16 +1870,28 @@
                     const printContent = document.createElement('div');
                     printContent.className = 'print-content';
                     printContent.innerHTML = buildInvoice(e);
+                    
+                    // إخفاء كل شيء عدا محتوى الطباعة
+                    document.body.classList.add('printing');
+                    
                     document.body.appendChild(printContent);
-                    window.print();
-                    document.body.removeChild(printContent);
+                    
+                    // تأخير الطباعة لضمان تحميل المحتوى
+                    setTimeout(() => {
+                        window.print();
+                        
+                        // إعادة عرض العناصر بعد الطباعة
+                        setTimeout(() => {
+                            document.body.classList.remove('printing');
+                            document.body.removeChild(printContent);
+                        }, 500);
+                    }, 200);
                 }
             }
             const editInvoice = e.target.dataset.editInvoice;
             if (editInvoice) {
                 const entry = state.data.entries[editInvoice];
                 if (entry) {
-                    // تعبئة الحقول بقيم الفاتورة المحددة
                     $('#site').value = entry.site;
                     $('#phone').value = entry.phone;
                     $('#clientName').value = entry.clientName;
@@ -1765,7 +1904,6 @@
                     $('#price').value = entry.price;
                     $('#total').value = entry.total.toFixed(2);
                     
-                    // تحديد الملحقات
                     const addonsSelect = $('#addons');
                     Array.from(addonsSelect.options).forEach(option => {
                         option.selected = entry.addons.includes(option.value);
@@ -1773,15 +1911,12 @@
                     
                     $('#payment').value = entry.payment;
                     
-                    // حفظ مؤشر الفاتورة التي يتم تعديلها
                     state.editingIndex = editInvoice;
                     
-                    // تغيير نص زر الإضافة إلى "حفظ التعديلات"
                     $('#btnAdd').textContent = 'حفظ التعديلات';
                     $('#btnAdd').classList.remove('b-green');
                     $('#btnAdd').classList.add('save-btn');
                     
-                    // الانتقال إلى شاشة الإدخال
                     setScreen('input');
                 }
             }
@@ -1796,35 +1931,59 @@
                 printContent.className = 'print-content';
                 printContent.innerHTML = $('#foodCardContainer').querySelector('.food-card').outerHTML;
                 
+                // إخفاء كل شيء عدا محتوى الطباعة
+                document.body.classList.add('printing');
+                
                 document.body.appendChild(printContent);
-                window.print();
+                
+                // تأخير الطباعة لضمان تحميل المحتوى
                 setTimeout(() => {
-                    document.body.removeChild(printContent);
-                }, 500);
+                    window.print();
+                    
+                    // إعادة عرض العناصر بعد الطباعة
+                    setTimeout(() => {
+                        document.body.classList.remove('printing');
+                        document.body.removeChild(printContent);
+                    }, 500);
+                }, 200);
             }
             
-            // النقر على خلية في جدول الفواتير للتعديل المباشر
+            if (e.target.id === 'btnSavePrinter') {
+                state.data.printers.selected = $('#printerType').value;
+                state.data.printers.customWidth = +$('#customWidth').value || 80;
+                state.data.printers.customHeight = +$('#customHeight').value || 297;
+                save();
+                alert('تم حفظ إعدادات الطابعة');
+            }
+            
+            if (e.target.id === 'printerType') {
+                if (e.target.value === 'custom') {
+                    $('#customWidth').disabled = false;
+                    $('#customHeight').disabled = false;
+                } else {
+                    $('#customWidth').disabled = true;
+                    $('#customHeight').disabled = true;
+                }
+            }
+            
             const cell = e.target.closest('#tblInvoices tbody td');
             if (cell && !e.target.closest('button') && state.screen === 'invoices') {
                 const row = cell.parentElement;
                 const rowIndex = Array.from(row.parentElement.children).indexOf(row);
                 const cellIndex = Array.from(row.children).indexOf(cell);
                 
-                // السماح بتعديل الخلايا من 1 إلى 7 (تخطي العمود الأول والعمود الأخير)
                 if (cellIndex > 0 && cellIndex < 8) {
                     startEdit(rowIndex, cellIndex, cell);
                 }
             }
         });
         
-        // حفظ التعديل عند الضغط على Enter
         document.addEventListener('keydown', e => {
             if (e.key === 'Enter' && state.editingElement) {
                 saveEdit();
             }
         });
 
-        // Events
         $('#animalType').addEventListener('change', () => {
             const animal = $('#animalType').value;
             const cut = $('#cutType').value;
