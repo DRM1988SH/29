@@ -415,8 +415,8 @@
 
         @media print {
             @page {
-                size: auto;
-                margin: 10mm;
+                size: A4 landscape;
+                margin: 5mm;
             }
             
             body * {
@@ -433,7 +433,7 @@
                 left: 0;
                 top: 0;
                 width: 100%;
-                padding: 20px;
+                padding: 10px;
             }
 
             .foodcard-page {
@@ -451,22 +451,54 @@
             }
 
             .landscape-report {
-                transform: rotate(90deg);
-                transform-origin: left top;
-                width: 297mm;
-                height: 210mm;
-                position: absolute;
-                top: 0;
-                left: 100%;
+                width: 100%;
                 overflow: visible;
-                padding: 20mm;
             }
             
             .auto-fit-columns td, 
             .auto-fit-columns th {
                 white-space: nowrap;
                 width: auto !important;
+                padding: 5px;
+                font-size: 12px;
             }
+            
+            .report-header {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .report-title {
+                font-size: 22px;
+            }
+            
+            .report-logo {
+                height: 70px;
+            }
+            
+            .report-meta {
+                padding: 10px;
+                margin-bottom: 15px;
+                font-size: 14px;
+            }
+        }
+        
+        /* زر تعديل الفاتورة */
+        .edit-btn {
+            background: var(--amber-btn-bg);
+            color: var(--amber-btn-color);
+            border: 2px solid var(--amber-btn-color);
+            height: 40px;
+            font-size: 16px;
+        }
+        
+        /* زر حفظ التعديلات */
+        .save-btn {
+            background: var(--green-btn-bg);
+            color: var(--green-btn-color);
+            border: 2px solid var(--green-btn-color);
+            height: 40px;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -506,7 +538,7 @@
                 <img id="hubImg" class="img200" alt>
                 <h3 style="font-size:28px">مرحبا بكم في نظام المسالخ وسجلات المتعاملين</h3>
                 <div class="row" style="justify-content:center;margin-top:25px;gap:20px">
-                    <p style="font-size:22px;">جميع البيانات للاستخدام الرسمي فقط غير مصرح للاستخدام الشخصي وتداول البيانات.</p>
+                    <p style="font-size:22px;">جميع البيانات للاستخدام الرسمي فقط غير مصرح للاستخدام الشخصي وتداول البيانات © .</p>
                 </div>
             </div>
         </section>
@@ -885,7 +917,8 @@
             logged: false,
             loggedId: null,
             role: 'user',
-            data: JSON.parse(localStorage.getItem(DBKEY) || 'null') || getDefaults()
+            data: JSON.parse(localStorage.getItem(DBKEY) || 'null') || getDefaults(),
+            editingIndex: null // لتخزين مؤشر الفاتورة التي يتم تعديلها
         };
 
         function save() {
@@ -1082,6 +1115,22 @@
             });
         }
 
+        function clearInputFields() {
+            // مسح جميع الحقول ما عدا الموقع
+            $('#phone').value = '';
+            $('#clientName').value = '';
+            $('#invoiceNo').value = '';
+            $('#animalNo').value = '';
+            $('#sticker').value = '';
+            $('#qty').value = '';
+            $('#animalType').value = '';
+            $('#cutType').value = '';
+            $('#price').value = '0';
+            $('#total').value = '';
+            $('#addons').selectedIndex = -1;
+            $('#payment').value = 'بطاقة';
+        }
+
         function addEntry() {
             const e = {
                 date: new Date().toISOString(),
@@ -1099,11 +1148,27 @@
                 addons: Array.from($('#addons').selectedOptions).map(o => o.value),
                 payment: $('#payment').value
             };
+            
             upsertClient(e.phone, e.clientName);
-            state.data.entries.push(e);
+            
+            if (state.editingIndex !== null) {
+                // تحديث الفاتورة الموجودة بدلاً من إضافة جديدة
+                state.data.entries[state.editingIndex] = e;
+                state.editingIndex = null;
+                $('#btnAdd').textContent = 'إضافة ذبيحة';
+            } else {
+                // إضافة فاتورة جديدة
+                state.data.entries.push(e);
+            }
+            
             save();
             renderCurrent();
+            renderInvoices();
             alert('تم الحفظ');
+            
+            if (state.editingIndex === null) {
+                clearInputFields();
+            }
         }
 
         function expiryDays(a) {
@@ -1132,7 +1197,7 @@
                     </tbody>
                 </table>
                 <div style="margin-top:30px;text-align:center;font-size:16px">
-                    شكرًا لتعاملكم معنا - ${e.site}
+                    نسعد دوماً لخدمتكم - ${e.site}
                 </div>
             </div>`;
         }
@@ -1206,6 +1271,7 @@
             window.print();
             setTimeout(() => {
                 document.body.removeChild(printContent);
+                clearInputFields(); // مسح الحقول بعد الطباعة
             }, 500);
         }
 
@@ -1273,6 +1339,9 @@
                 <table class="auto-fit-columns" style="width:100%;border:1.5pt solid #000">
                     ${$('#tblClients').innerHTML}
                 </table>
+                <div class="report-footer">
+                    <p>عدد السجلات: ${$('#tblClients tbody').children.length}</p>
+                </div>
             </div>`;
             
             const printContent = document.createElement('div');
@@ -1337,6 +1406,9 @@
                 <table style="width:100%;border:1.5pt solid #000">
                     ${$('#tblStats').innerHTML}
                 </table>
+                <div class="report-footer">
+                    <p>عدد الأنواع: ${$('#tblStats tbody').children.length}</p>
+                </div>
             </div>`;
             
             const printContent = document.createElement('div');
@@ -1354,7 +1426,7 @@
             const tb = $('#tblInvoices tbody');
             tb.innerHTML = '';
             const phone = $('#searchPhone').value.trim();
-            const filtered = phone ? state.data.entries.filter(e => e.phone === phone) : [];
+            const filtered = phone ? state.data.entries.filter(e => e.phone === phone) : state.data.entries.slice(-100).reverse();
             filtered.forEach((e, i) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -1367,7 +1439,10 @@
                 <td>${e.qty}</td>
                 <td>${e.price}</td>
                 <td>${e.total.toFixed(2)}</td>
-                <td><button class="btn b-blue" data-print-invoice="${i}" style="height:40px;font-size:16px">طباعة</button></td>
+                <td>
+                    <button class="btn b-blue" data-print-invoice="${i}" style="height:40px;font-size:16px">طباعة</button>
+                    <button class="btn edit-btn" data-edit-invoice="${i}" style="height:40px;font-size:16px">تعديل</button>
+                </td>
             `;
                 tb.appendChild(tr);
             });
@@ -1381,7 +1456,22 @@
         }
 
         function init() {
-            setScreen('welcome');
+            // استعادة حالة المستخدم من localStorage إذا كانت موجودة
+            const savedState = localStorage.getItem('slaughter-app-state');
+            if (savedState) {
+                const parsed = JSON.parse(savedState);
+                state.logged = parsed.logged || false;
+                state.loggedId = parsed.loggedId || null;
+                state.role = parsed.role || 'user';
+                state.screen = parsed.screen || 'welcome';
+            }
+            
+            if (state.logged) {
+                setScreen(state.screen);
+            } else {
+                setScreen('welcome');
+            }
+            
             refreshImages();
             initStickerQty();
             refreshSites();
@@ -1389,6 +1479,7 @@
             refreshUsers();
             refreshSitesTable();
             renderCurrent();
+            renderInvoices();
             $('#now').textContent = dayjs().format('dddd, D MMMM YYYY');
         }
 
@@ -1417,6 +1508,16 @@
         }
 
         document.addEventListener('DOMContentLoaded', init);
+
+        // حفظ حالة التطبيق قبل إغلاق الصفحة
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem('slaughter-app-state', JSON.stringify({
+                logged: state.logged,
+                loggedId: state.loggedId,
+                role: state.role,
+                screen: state.screen
+            }));
+        });
 
         // Events
         document.addEventListener('click', e => {
@@ -1543,6 +1644,43 @@
                     document.body.appendChild(printContent);
                     window.print();
                     document.body.removeChild(printContent);
+                }
+            }
+            const editInvoice = e.target.dataset.editInvoice;
+            if (editInvoice) {
+                const entry = state.data.entries[editInvoice];
+                if (entry) {
+                    // تعبئة الحقول بقيم الفاتورة المحددة
+                    $('#site').value = entry.site;
+                    $('#phone').value = entry.phone;
+                    $('#clientName').value = entry.clientName;
+                    $('#invoiceNo').value = entry.invoiceNo;
+                    $('#animalNo').value = entry.animalNo;
+                    $('#sticker').value = entry.sticker;
+                    $('#animalType').value = entry.animalType;
+                    $('#cutType').value = entry.cutType;
+                    $('#qty').value = entry.qty;
+                    $('#price').value = entry.price;
+                    $('#total').value = entry.total.toFixed(2);
+                    
+                    // تحديد الملحقات
+                    const addonsSelect = $('#addons');
+                    Array.from(addonsSelect.options).forEach(option => {
+                        option.selected = entry.addons.includes(option.value);
+                    });
+                    
+                    $('#payment').value = entry.payment;
+                    
+                    // حفظ مؤشر الفاتورة التي يتم تعديلها
+                    state.editingIndex = editInvoice;
+                    
+                    // تغيير نص زر الإضافة إلى "حفظ التعديلات"
+                    $('#btnAdd').textContent = 'حفظ التعديلات';
+                    $('#btnAdd').classList.remove('b-green');
+                    $('#btnAdd').classList.add('save-btn');
+                    
+                    // الانتقال إلى شاشة الإدخال
+                    setScreen('input');
                 }
             }
             if (e.target.id === 'btnPreviewCard') {
