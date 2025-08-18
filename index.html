@@ -686,23 +686,7 @@
                 </div>
             </div>
             <div id="clientsReport">
-                <table id="tblClients" class="auto-fit-columns">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>التاريخ</th>
-                            <th>اسم المتعامل</th>
-                            <th>رقم التلفون</th>
-                            <th>نوع الذبيحة</th>
-                            <th>نوع التقطيع</th>
-                            <th>رقم الفاتورة</th>
-                            <th>العدد</th>
-                            <th>السعر</th>
-                            <th>الإجمالي</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <!-- تم نقل الجدول إلى أسفل الشاشة بعد الأزرار -->
             </div>
         </section>
 
@@ -1268,29 +1252,60 @@
             return (a === 'خروف' || a === 'ماعز') ? 14 : 21;
         }
 
+        function printToEpsonTM70II(content) {
+            // إنشاء نافذة طباعة جديدة
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            
+            // كتابة محتوى الفاتورة في النافذة الجديدة
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>طباعة الفاتورة</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; direction: rtl; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                        @media print {
+                            @page { size: 80mm 297mm; margin: 0; }
+                            body { width: 80mm; height: 297mm; }
+                        }
+                    </style>
+                </head>
+                <body onload="window.print(); window.close();">
+                    ${content}
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+        }
+
         function buildInvoice(e) {
             const dim = getInvoiceDimensions();
+            const isEpson = state.data.printers.selected === 'Epson-TM-70II';
             const img = state.data.images.logo || state.data.images.welcome || '';
+            
             return `
-            <div style="border:2.5pt solid #000;border-radius:15px;padding:20px;width:${dim.width}mm;min-height:${dim.height}mm;margin:0 auto;font-family:'Cairo',sans-serif;direction:rtl">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:10px">
-                    ${img?`<img src='${img}' style='height:30px;max-width:100px'>`:''}
-                    <h2 style="margin:0;font-size:${dim.width > 90 ? '24px' : '18px'}">فاتورة - ${e.site}</h2>
+            <div style="border:1px solid #000;padding:${isEpson ? '5px' : '20px'};width:${dim.width}mm;min-height:${dim.height}mm;margin:0 auto;font-family:'Cairo',sans-serif;direction:rtl;font-size:${isEpson ? '12px' : '14px'}">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid #000;padding-bottom:5px">
+                    ${img?`<img src='${img}' style='height:${isEpson ? '20px' : '30px'};max-width:${isEpson ? '60px' : '100px'}'>`:''}
+                    <h2 style="margin:0;font-size:${isEpson ? '16px' : '18px'}">فاتورة - ${e.site}</h2>
                 </div>
-                <table style="width:100%;font-size:${dim.width > 90 ? '18px' : '14px'};border-collapse:collapse;margin:10px 0">
+                <table style="width:100%;font-size:${isEpson ? '10px' : '14px'};border-collapse:collapse;margin:5px 0">
                     <tbody>
-                        <tr><td style="padding:8px;width:30%;border:2.5pt solid #000"><b>التاريخ</b></td><td style="padding:8px;border:2.5pt solid #000">${dayjs(e.date).format('YYYY-MM-DD HH:mm')}</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>رقم الفاتورة</b></td><td style="padding:8px;border:2.5pt solid #000">${e.invoiceNo}</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>رقم الذبيحة</b></td><td style="padding:8px;border:2.5pt solid #000">${e.animalNo}</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>رقم الاستيكر</b></td><td style="padding:8px;border:2.5pt solid #000">${e.sticker}</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>نوع الذبيحة</b></td><td style="padding:8px;border:2.5pt solid #000">${e.animalType}</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>نوع التقطيع</b></td><td style="padding:8px;border:2.5pt solid #000">${e.cutType}</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>العدد</b></td><td style="padding:8px;border:2.5pt solid #000">${e.qty}</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>السعر</b></td><td style="padding:8px;border:2.5pt solid #000">${e.price} درهم</td></tr>
-                        <tr><td style="padding:8px;border:2.5pt solid #000"><b>الإجمالي</b></td><td style="padding:8px;border:2.5pt solid #000">${e.total.toFixed(2)} درهم</td></tr>
+                        <tr><td style="padding:4px;width:30%;border:1px solid #000"><b>التاريخ</b></td><td style="padding:4px;border:1px solid #000">${dayjs(e.date).format('YYYY-MM-DD HH:mm')}</td></tr>
+                        <tr><td style="padding:4px;border:1px solid #000"><b>رقم الفاتورة</b></td><td style="padding:4px;border:1px solid #000">${e.invoiceNo}</td></tr>
+                        <tr><td style="padding:4px;border:1px solid #000"><b>رقم الذبيحة</b></td><td style="padding:4px;border:1px solid #000">${e.animalNo}</td></tr>
+                        <tr><td style="padding:4px;border:1px solid #000"><b>رقم الاستيكر</b></td><td style="padding:4px;border:1px solid #000">${e.sticker}</td></tr>
+                        <tr><td style="padding:4px;border:1px solid #000"><b>نوع الذبيحة</b></td><td style="padding:4px;border:1px solid #000">${e.animalType}</td></tr>
+                        <tr><td style="padding:4px;border:1px solid #000"><b>نوع التقطيع</b></td><td style="padding:4px;border:1px solid #000">${e.cutType}</td></tr>
+                        <tr><td style="padding:4px;border:1px solid #000"><b>العدد</b></td><td style="padding:4px;border:1px solid #000">${e.qty}</td></tr>
+                        <tr><td style="padding:4px;border:1px solid #000"><b>السعر</b></td><td style="padding:4px;border:1px solid #000">${e.price} درهم</td></tr>
+                        <tr><td style="padding:4px;border:1px solid #000"><b>الإجمالي</b></td><td style="padding:4px;border:1px solid #000">${e.total.toFixed(2)} درهم</td></tr>
                     </tbody>
                 </table>
-                <div style="margin-top:15px;text-align:center;font-size:${dim.width > 90 ? '16px' : '12px'};border-top:2px solid #000;padding-top:10px">
+                <div style="margin-top:10px;text-align:center;font-size:${isEpson ? '10px' : '12px'};border-top:1px solid #000;padding-top:5px">
                     نسعد دوماً لخدمتكم - ${e.site}
                 </div>
             </div>`;
@@ -1342,27 +1357,46 @@
             const e = state.data.entries[state.data.entries.length - 1];
             if (!e) return alert('لا بيانات');
             
-            const printContent = document.createElement('div');
-            printContent.className = 'print-content';
-            printContent.innerHTML = buildInvoice(e);
+            const content = buildInvoice(e);
             
-            // إخفاء كل شيء عدا محتوى الطباعة
-            document.body.classList.add('printing');
-            
-            document.body.appendChild(printContent);
-            
-            // تأخير الطباعة لضمان تحميل المحتوى
-            setTimeout(() => {
-                window.print();
+            if (state.data.printers.selected === 'Epson-TM-70II') {
+                printToEpsonTM70II(content);
+            } else {
+                const printContent = document.createElement('div');
+                printContent.className = 'print-content';
+                printContent.innerHTML = content;
                 
-                // إعادة عرض العناصر بعد الطباعة
-                setTimeout(() => {
-                    document.body.classList.remove('printing');
-                    document.body.removeChild(printContent);
-                }, 500);
-            }, 200);
+                document.body.classList.add('printing');
+                document.body.appendChild(printContent);
+                
+                window.print();
+                document.body.classList.remove('printing');
+                document.body.removeChild(printContent);
+            }
         }
         
+        function printInvoiceFromTable(index) {
+            const e = state.data.entries[index];
+            if (!e) return;
+            
+            const content = buildInvoice(e);
+            
+            if (state.data.printers.selected === 'Epson-TM-70II') {
+                printToEpsonTM70II(content);
+            } else {
+                const printContent = document.createElement('div');
+                printContent.className = 'print-content';
+                printContent.innerHTML = content;
+                
+                document.body.classList.add('printing');
+                document.body.appendChild(printContent);
+                
+                window.print();
+                document.body.classList.remove('printing');
+                document.body.removeChild(printContent);
+            }
+        }
+
         function printFoodCardLast() {
             const e = state.data.entries[state.data.entries.length - 1];
             if (!e) return alert('لا بيانات');
@@ -1371,33 +1405,23 @@
             printContent.className = 'print-content';
             printContent.innerHTML = buildFoodCard(e);
             
-            // إخفاء كل شيء عدا محتوى الطباعة
             document.body.classList.add('printing');
-            
             document.body.appendChild(printContent);
             
-            // إعدادات خاصة بالطباعة على Zebra ZT-230
             const printSettings = {
                 silent: true,
                 printBackground: true,
                 margin: 'none',
                 pageSize: {
-                    width: 9.701 * 96, // تحويل البوصة إلى بكسل (96 بكسل لكل بوصة)
+                    width: 9.701 * 96,
                     height: 1.907 * 96
                 }
             };
             
-            // تأخير الطباعة لضمان تحميل المحتوى
-            setTimeout(() => {
-                window.print(printSettings);
-                
-                // إعادة عرض العناصر بعد الطباعة
-                setTimeout(() => {
-                    document.body.classList.remove('printing');
-                    document.body.removeChild(printContent);
-                    clearInputFields();
-                }, 500);
-            }, 200);
+            window.print(printSettings);
+            document.body.classList.remove('printing');
+            document.body.removeChild(printContent);
+            clearInputFields();
         }
 
         function filter(site, from, to) {
@@ -1415,24 +1439,41 @@
             const from = $('#fltFrom').value;
             const to = $('#fltTo').value;
             const rows = filter(site, from, to);
-            const tb = $('#tblClients tbody');
-            tb.innerHTML = '';
-            rows.forEach((e, i) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                <td>${i+1}</td>
-                <td>${dayjs(e.date).format('YYYY-MM-DD HH:mm')}</td>
-                <td>${e.clientName}</td>
-                <td>${e.phone}</td>
-                <td>${e.animalType}</td>
-                <td>${e.cutType}</td>
-                <td>${e.invoiceNo}</td>
-                <td>${e.qty}</td>
-                <td>${e.price}</td>
-                <td>${e.total.toFixed(2)}</td>
+            const tb = $('#clientsReport');
+            tb.innerHTML = `
+                <table id="tblClients" class="auto-fit-columns">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>التاريخ</th>
+                            <th>اسم المتعامل</th>
+                            <th>رقم التلفون</th>
+                            <th>نوع الذبيحة</th>
+                            <th>نوع التقطيع</th>
+                            <th>رقم الفاتورة</th>
+                            <th>العدد</th>
+                            <th>السعر</th>
+                            <th>الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map((e, i) => `
+                            <tr>
+                                <td>${i+1}</td>
+                                <td>${dayjs(e.date).format('YYYY-MM-DD HH:mm')}</td>
+                                <td>${e.clientName}</td>
+                                <td>${e.phone}</td>
+                                <td>${e.animalType}</td>
+                                <td>${e.cutType}</td>
+                                <td>${e.invoiceNo}</td>
+                                <td>${e.qty}</td>
+                                <td>${e.price}</td>
+                                <td>${e.total.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             `;
-                tb.appendChild(tr);
-            });
         }
 
         function buildReportHeader(title) {
@@ -1489,21 +1530,12 @@
             printContent.className = 'print-content';
             printContent.innerHTML = content;
             
-            // إخفاء كل شيء عدا محتوى الطباعة
             document.body.classList.add('printing');
-            
             document.body.appendChild(printContent);
             
-            // تأخير الطباعة لضمان تحميل المحتوى
-            setTimeout(() => {
-                window.print();
-                
-                // إعادة عرض العناصر بعد الطباعة
-                setTimeout(() => {
-                    document.body.classList.remove('printing');
-                    document.body.removeChild(printContent);
-                }, 500);
-            }, 200);
+            window.print();
+            document.body.classList.remove('printing');
+            document.body.removeChild(printContent);
         }
 
         function runStats() {
@@ -1577,21 +1609,12 @@
             printContent.className = 'print-content';
             printContent.innerHTML = content;
             
-            // إخفاء كل شيء عدا محتوى الطباعة
             document.body.classList.add('printing');
-            
             document.body.appendChild(printContent);
             
-            // تأخير الطباعة لضمان تحميل المحتوى
-            setTimeout(() => {
-                window.print();
-                
-                // إعادة عرض العناصر بعد الطباعة
-                setTimeout(() => {
-                    document.body.classList.remove('printing');
-                    document.body.removeChild(printContent);
-                }, 500);
-            }, 200);
+            window.print();
+            document.body.classList.remove('printing');
+            document.body.removeChild(printContent);
         }
 
         function renderInvoices() {
@@ -1865,28 +1888,7 @@
             }
             const printInvoice = e.target.dataset.printInvoice;
             if (printInvoice) {
-                const e = state.data.entries[printInvoice];
-                if (e) {
-                    const printContent = document.createElement('div');
-                    printContent.className = 'print-content';
-                    printContent.innerHTML = buildInvoice(e);
-                    
-                    // إخفاء كل شيء عدا محتوى الطباعة
-                    document.body.classList.add('printing');
-                    
-                    document.body.appendChild(printContent);
-                    
-                    // تأخير الطباعة لضمان تحميل المحتوى
-                    setTimeout(() => {
-                        window.print();
-                        
-                        // إعادة عرض العناصر بعد الطباعة
-                        setTimeout(() => {
-                            document.body.classList.remove('printing');
-                            document.body.removeChild(printContent);
-                        }, 500);
-                    }, 200);
-                }
+                printInvoiceFromTable(printInvoice);
             }
             const editInvoice = e.target.dataset.editInvoice;
             if (editInvoice) {
@@ -1931,21 +1933,12 @@
                 printContent.className = 'print-content';
                 printContent.innerHTML = $('#foodCardContainer').querySelector('.food-card').outerHTML;
                 
-                // إخفاء كل شيء عدا محتوى الطباعة
                 document.body.classList.add('printing');
-                
                 document.body.appendChild(printContent);
                 
-                // تأخير الطباعة لضمان تحميل المحتوى
-                setTimeout(() => {
-                    window.print();
-                    
-                    // إعادة عرض العناصر بعد الطباعة
-                    setTimeout(() => {
-                        document.body.classList.remove('printing');
-                        document.body.removeChild(printContent);
-                    }, 500);
-                }, 200);
+                window.print();
+                document.body.classList.remove('printing');
+                document.body.removeChild(printContent);
             }
             
             if (e.target.id === 'btnSavePrinter') {
